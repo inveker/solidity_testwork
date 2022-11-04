@@ -5,6 +5,7 @@ import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 /// @title ERC20 token with staking function 
 /// @notice A token whose initial supply to be minted by the deployer. 
+/// Has no owner.
 /// Holders can stake their tokens. 
 /// Only single staking is supported, i.e. you cannot stake again with a not withdrawn deposit
 /// All staked tokens are stored on the balance of this contract
@@ -22,19 +23,19 @@ contract MyTestCoin is ERC20 {
     }
 
     /// @notice The frequency with which you can claim rewards
-    uint256 internal constant CLAIM_REWARDS_DELAY = 1 hours;
+    uint256 public constant CLAIM_REWARDS_DELAY = 1 hours;
 
     /// @notice Time after which it will be possible to unlock funds
-    uint256 internal constant WITHDRAW_DELAY = 1 days;
+    uint256 public constant WITHDRAW_DELAY = 1 days;
 
     /// @notice The frequency with which rewards are awarded
-    uint256 internal constant REWARD_PERIOD = 1 hours;
+    uint256 public constant REWARD_PERIOD = 1 hours;
 
     /// @notice The percentage of rewards from the deposit, calculated based on REWARD_DENOMINATOR
-    uint256 internal constant REWARD_RATE_PER_PERIOD = 1000; // 10%
+    uint256 public constant REWARD_RATE_PER_PERIOD = 1000; // 10%
 
-    /// @notice Basis for calculating the percentage of awards. Max 10000 = 100% rewards
-    uint256 internal constant REWARD_DENOMINATOR = 10000; 
+    /// @notice Basis for calculating the percentage of awards. Min 1 = 0.01%, Max 10000 = 100% rewards
+    uint256 public constant REWARD_DENOMINATOR = 10000; 
 
     /// @notice Staked deposits at staker address
     mapping(address => Stake) public stakeByUser;
@@ -55,6 +56,7 @@ contract MyTestCoin is ERC20 {
 
     /// @param _amount Amount of tokens to stake
     function stake(uint256 _amount) external {
+        require(_amount > 0, "Amount can not be zero");
         require(balanceOf(msg.sender) >= _amount, "Not enough balance");
 
         _transfer(msg.sender, address(this), _amount);
@@ -114,6 +116,8 @@ contract MyTestCoin is ERC20 {
             userStake.lastRewardTimestamp
         );
 
+        require(rewardsAmount > 0, "Rewards amount = 0");
+
         stakeByUser[msg.sender].lastRewardTimestamp = block.timestamp - restOfTime;
 
         _mint(msg.sender, rewardsAmount);
@@ -124,7 +128,8 @@ contract MyTestCoin is ERC20 {
     function withdraw() external {
         Stake memory userStake = stakeByUser[msg.sender];
 
-        require(userStake.withdrawTimestamp >= block.timestamp, "Blocking period has not expired");
+        require(userStake.amount > 0, "Not has staked deposit");
+        require(block.timestamp >= userStake.withdrawTimestamp , "Blocking period has not expired");
 
         delete stakeByUser[msg.sender];
 
