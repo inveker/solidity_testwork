@@ -41,23 +41,26 @@ describe('MyTestCoin', function () {
   it('Stake: regular', async () => {
     const currentBlock = await ethers.provider.getBlock(ethers.provider.blockNumber)
     const stackedAmount = userInitialBalance.div(2)
-    const WITHDRAW_DELAY = await myTestCoin.WITHDRAW_DELAY()
-    const estimatedWithdrawTimestamp = WITHDRAW_DELAY.add(currentBlock.timestamp)
     const estimatedUserBalance = userInitialBalance.sub(stackedAmount)
     await myTestCoin.connect(user).stake(stackedAmount)
 
-    const { amount, lastRewardTimestamp, withdrawTimestamp } = await myTestCoin.stakeByUser(user.address)
+    const { amount, lastRewardTimestamp, creationTimestamp, claimedRewards } = await myTestCoin.stakeByUser(user.address)
 
     assert(amount.eq(stackedAmount), `stackedAmount != locked amount, ${stackedAmount} != ${amount}`)
 
     assert(
-      lastRewardTimestamp.sub(currentBlock.timestamp).abs().lte(60), // ~ +- 60 sec
-      `lastRewardTimestamp != block.timestamp, ${lastRewardTimestamp} != ${currentBlock.timestamp}`,
+      lastRewardTimestamp.eq(0), 
+      `lastRewardTimestamp != 0, ${lastRewardTimestamp} != 0`,
     )
 
     assert(
-      withdrawTimestamp.sub(estimatedWithdrawTimestamp).abs().lte(60), // ~ +- 60 sec
-      `withdrawTimestamp != estimatedWithdrawTimestamp, ${withdrawTimestamp} != ${estimatedWithdrawTimestamp}`,
+      creationTimestamp.sub(currentBlock.timestamp).abs().lte(60), // ~ +- 60 sec
+      `creationTimestamp != block.timestamp, ${creationTimestamp} != ${currentBlock.timestamp}`,
+    )
+
+    assert(
+      claimedRewards.eq(0), 
+      `claimedRewards != 0, ${claimedRewards} != 0`,
     )
 
     const userBalance = await myTestCoin.balanceOf(user.address)
@@ -77,7 +80,8 @@ describe('MyTestCoin', function () {
     expect(myTestCoin.connect(user).stake(stackedAmount)).to.be.revertedWith('Amount can not be zero')
   })
 
-  // This test used 3 rewards periods: 1x time, 1.5x time, 0.5 time, sum = 3x time period rewards
+  // This test used 3.5 rewards periods: 1x time, 1.5x time, 1 time, sum = 3x full time period rewards
+  // 3.5 rewards periods due to function call restriction
   it('Claim Rewards: regular', async () => {
     const stackedAmount = userInitialBalance.div(2)
     const REWARD_PERIOD = await myTestCoin.REWARD_PERIOD()
@@ -87,7 +91,7 @@ describe('MyTestCoin', function () {
 
     // First period 1x time
     {
-      await helpers.time.increase(REWARD_PERIOD)
+      await helpers.time.increase(REWARD_PERIOD) // 1x period
 
       const estematedRewards = await myTestCoin.rewards(user.address)
       const beforeClaimBalance = await myTestCoin.balanceOf(user.address)
@@ -102,7 +106,7 @@ describe('MyTestCoin', function () {
 
     // Second period x 1.5 time, get rewards by 1 period, and save 0.5 period to next time
     {
-      const secondPeriod = REWARD_PERIOD.mul(15).div(10) // * 1.5
+      const secondPeriod = REWARD_PERIOD.mul(15).div(10) // 1.5x period
 
       await helpers.time.increase(secondPeriod)
 
@@ -120,9 +124,9 @@ describe('MyTestCoin', function () {
       )
     }
 
-    // Third period x 0.5 time, get 1x time reward (0.5 from second period)
+    // Third period x 1 time. 0.5 from this period cant be claimed, but 0.5 from last period added to rewards
     {
-      const thirdPeriod = REWARD_PERIOD.mul(5).div(10) // * 0.5
+      const thirdPeriod = REWARD_PERIOD // 1x period
 
       await helpers.time.increase(thirdPeriod)
 
@@ -163,9 +167,17 @@ describe('MyTestCoin', function () {
     const CLAIM_REWARDS_DELAY = await myTestCoin.CLAIM_REWARDS_DELAY()
     await myTestCoin.connect(user).stake(stackedAmount)
 
-    await helpers.time.increase(CLAIM_REWARDS_DELAY.sub(5 * 60)) // CLAIM_REWARDS_DELAY - 5 min
+    // First regular claim
+    await helpers.time.increase(CLAIM_REWARDS_DELAY.add(5 * 60)) // CLAIM_REWARDS_DELAY + 5 min
+    await myTestCoin.connect(user).claimRewards()
 
+    // Claim after < CLAIM_REWARDS_DELAY
+    await helpers.time.increase(CLAIM_REWARDS_DELAY.sub(5 * 60)) // CLAIM_REWARDS_DELAY - 5 min
     await expect(myTestCoin.connect(user).claimRewards()).to.be.revertedWith('Claim rewards period has not ended')
+  })
+
+  it('Claim Rewards: without stake', async () => {
+    await expect(myTestCoin.connect(user).claimRewards()).to.be.revertedWith("Can't claim rewards without a stake")
   })
 
   it('Withdraw: regular', async () => {
@@ -197,6 +209,6 @@ describe('MyTestCoin', function () {
   })
 
   it('Withdraw: without deposit', async () => {
-    await expect(myTestCoin.connect(user).withdraw()).to.be.revertedWith('Not has staked deposit')
+    await expect(myTestCoin.connect(user).withdraw()).to.be.revertedWith("Can't withdraw without a stake")
   })
 })
