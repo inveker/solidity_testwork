@@ -3,10 +3,10 @@ pragma solidity ^0.8.9;
 
 import { ERC20 } from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-/// @title ERC20 token with staking function 
-/// @notice A token whose initial supply to be minted by the deployer. 
+/// @title ERC20 token with staking function
+/// @notice A token whose initial supply to be minted by the deployer.
 /// Has no owner.
-/// Holders can stake their tokens. 
+/// Holders can stake their tokens.
 /// Only single staking is supported, i.e. you cannot stake again with a not withdrawn deposit
 /// All staked tokens are stored on the balance of this contract
 /// With a staked deposit, users can withdraw rewards, and withdraw their funds after the blocking period has expired
@@ -23,19 +23,19 @@ contract MyTestCoin is ERC20 {
     }
 
     /// @notice The frequency with which you can claim rewards
-    uint256 public constant CLAIM_REWARDS_DELAY = 1 hours;
+    uint256 public immutable CLAIM_REWARDS_DELAY;
 
     /// @notice Time after which it will be possible to unlock funds
-    uint256 public constant WITHDRAW_DELAY = 1 days;
+    uint256 public immutable WITHDRAW_DELAY;
 
     /// @notice The frequency with which rewards are awarded
-    uint256 public constant REWARD_PERIOD = 1 hours;
+    uint256 public immutable REWARD_PERIOD;
 
     /// @notice The percentage of rewards from the deposit, calculated based on REWARD_DENOMINATOR
-    uint256 public constant REWARD_RATE_PER_PERIOD = 1000; // 10%
+    uint256 public immutable REWARD_RATE_PER_PERIOD;
 
     /// @notice Basis for calculating the percentage of awards. Min 1 = 0.01%, Max 10000 = 100% rewards
-    uint256 public constant REWARD_DENOMINATOR = 10000; 
+    uint256 public constant REWARD_DENOMINATOR = 10000;
 
     /// @notice Staked deposits at staker address
     mapping(address => Stake) public stakeByUser;
@@ -50,7 +50,21 @@ contract MyTestCoin is ERC20 {
     event Withdrawed(address indexed staker, uint256 amount);
 
     /// @param _initialSupply How many tokens will be minted to the deployer
-    constructor(uint256 _initialSupply) ERC20("MyTestCoin", "MTC") {
+    constructor(
+        uint256 _initialSupply,
+        uint256 _claimRewardsDelay,
+        uint256 _withdrawDelay,
+        uint256 _rewardPeriod,
+        uint256 _rewardRatePerPeriod
+    ) ERC20("MyTestCoin", "MTC") {
+        CLAIM_REWARDS_DELAY = _claimRewardsDelay;
+        WITHDRAW_DELAY = _withdrawDelay;
+        REWARD_PERIOD = _rewardPeriod;
+
+        require(_rewardRatePerPeriod <= REWARD_DENOMINATOR, "_rewardRatePerPeriod > REWARD_DENOMINATOR");
+        
+        REWARD_RATE_PER_PERIOD = _rewardRatePerPeriod;
+
         _mint(msg.sender, _initialSupply);
     }
 
@@ -129,7 +143,7 @@ contract MyTestCoin is ERC20 {
         Stake memory userStake = stakeByUser[msg.sender];
 
         require(userStake.amount > 0, "Not has staked deposit");
-        require(block.timestamp >= userStake.withdrawTimestamp , "Blocking period has not expired");
+        require(block.timestamp >= userStake.withdrawTimestamp, "Blocking period has not expired");
 
         delete stakeByUser[msg.sender];
 

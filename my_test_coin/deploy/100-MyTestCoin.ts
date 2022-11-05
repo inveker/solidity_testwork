@@ -11,7 +11,13 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
   await deploy('MyTestCoin', {
     contract: 'MyTestCoin',
     from: deployer,
-    args: [ethers.utils.parseEther('1000000')],
+    args: [
+      ethers.utils.parseEther('1000000'), // _initialSupply
+      60 * 60, // _claimRewardsDelay = 1 hours
+      60 * 60 * 24, // _withdrawDelay = 1 days
+      60 * 60, // _rewardPeriod = 1 hours
+      1000, // _rewardRatePerPeriod = 10%
+    ],
   })
 }
 
