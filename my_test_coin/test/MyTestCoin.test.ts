@@ -44,24 +44,20 @@ describe('MyTestCoin', function () {
     const estimatedUserBalance = userInitialBalance.sub(stackedAmount)
     await myTestCoin.connect(user).stake(stackedAmount)
 
-    const { amount, lastRewardTimestamp, creationTimestamp, claimedRewards } = await myTestCoin.stakeByUser(user.address)
+    const { amount, lastRewardTimestamp, creationTimestamp, claimedRewards } = await myTestCoin.stakeByUser(
+      user.address,
+    )
 
     assert(amount.eq(stackedAmount), `stackedAmount != locked amount, ${stackedAmount} != ${amount}`)
 
-    assert(
-      lastRewardTimestamp.eq(0), 
-      `lastRewardTimestamp != 0, ${lastRewardTimestamp} != 0`,
-    )
+    assert(lastRewardTimestamp.eq(0), `lastRewardTimestamp != 0, ${lastRewardTimestamp} != 0`)
 
     assert(
       creationTimestamp.sub(currentBlock.timestamp).abs().lte(60), // ~ +- 60 sec
       `creationTimestamp != block.timestamp, ${creationTimestamp} != ${currentBlock.timestamp}`,
     )
 
-    assert(
-      claimedRewards.eq(0), 
-      `claimedRewards != 0, ${claimedRewards} != 0`,
-    )
+    assert(claimedRewards.eq(0), `claimedRewards != 0, ${claimedRewards} != 0`)
 
     const userBalance = await myTestCoin.balanceOf(user.address)
     assert(
@@ -187,7 +183,7 @@ describe('MyTestCoin', function () {
 
     const userBalanceAfterStake = await myTestCoin.balanceOf(user.address)
 
-    await helpers.time.increase(WITHDRAW_DELAY) 
+    await helpers.time.increase(WITHDRAW_DELAY)
 
     await myTestCoin.connect(user).withdraw()
 
@@ -195,7 +191,10 @@ describe('MyTestCoin', function () {
 
     const withdrawedBalance = userBalanceAfterWithdraw.sub(userBalanceAfterStake)
 
-    assert(withdrawedBalance.eq(stackedAmount), `withdrawedBalance != stackedAmount, ${withdrawedBalance} != ${stackedAmount}`)
+    assert(
+      withdrawedBalance.eq(stackedAmount),
+      `withdrawedBalance != stackedAmount, ${withdrawedBalance} != ${stackedAmount}`,
+    )
   })
 
   it('Withdraw: before expiry', async () => {
@@ -203,7 +202,7 @@ describe('MyTestCoin', function () {
     const WITHDRAW_DELAY = await myTestCoin.WITHDRAW_DELAY()
     await myTestCoin.connect(user).stake(stackedAmount)
 
-    await helpers.time.increase(WITHDRAW_DELAY.sub(60)) // - 1 min 
+    await helpers.time.increase(WITHDRAW_DELAY.sub(60)) // - 1 min
 
     await expect(myTestCoin.connect(user).withdraw()).to.be.revertedWith('Blocking period has not expired')
   })
