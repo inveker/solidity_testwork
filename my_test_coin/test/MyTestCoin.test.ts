@@ -2,7 +2,7 @@ import { deployments, ethers, getNamedAccounts } from 'hardhat'
 import { SignerWithAddress } from '@nomiclabs/hardhat-ethers/signers'
 import { MyTestCoin, MyTestCoin__factory } from '../typechain-types'
 import { getNamedSigners } from '../utils/hardhat'
-import { BigNumber } from './utils/types'
+import { BigNumber } from '../utils/types'
 import { assert, expect } from 'chai'
 import * as helpers from '@nomicfoundation/hardhat-network-helpers'
 
@@ -14,7 +14,7 @@ describe('MyTestCoin', function () {
   let initSnapshot: string
 
   before(async () => {
-    const accounts = await getNamedSigners(getNamedAccounts)
+    const accounts = await getNamedSigners()
     deployer = accounts.deployer
     user = accounts.user
 
