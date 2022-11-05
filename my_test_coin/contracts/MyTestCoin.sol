@@ -95,6 +95,7 @@ contract MyTestCoin is ERC20 {
     }
 
     /// @notice Calculates the amount of rewards that can be received right now, and also saves unused time
+    /// @dev Passing _lastRewardTimestamp > block.timestamp may cause type overflow
     /// @param _amount  Staked tokens amount
     /// @param _lastRewardTimestamp  Time since last award claim
     /// @return rewardsAmount_ Amount of rewards that can be claimed
