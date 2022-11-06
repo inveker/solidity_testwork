@@ -66,14 +66,42 @@ describe('MyTestCoin', function () {
     )
   })
 
+  it('Stake: already staked', async () => {
+    const stackedAmount = userInitialBalance.div(2)
+    await myTestCoin.connect(user).stake(stackedAmount)
+
+    await expect(myTestCoin.connect(user).stake(stackedAmount)).to.be.revertedWith(
+      "Can't staked with an existing stake",
+    )
+  })
+
   it('Stake: amount > balance', async () => {
     const stackedAmount = userInitialBalance.mul(2)
-    expect(myTestCoin.connect(user).stake(stackedAmount)).to.be.revertedWith('Not enough balance')
+    await expect(myTestCoin.connect(user).stake(stackedAmount)).to.be.revertedWith('Not enough balance')
   })
 
   it('Stake: amount == 0', async () => {
     const stackedAmount = 0
-    expect(myTestCoin.connect(user).stake(stackedAmount)).to.be.revertedWith('Amount can not be zero')
+    await expect(myTestCoin.connect(user).stake(stackedAmount)).to.be.revertedWith('Amount can not be zero')
+  })
+
+  it('Stake: after withdraw', async () => {
+    const stackedAmount = userInitialBalance.div(2)
+    const WITHDRAW_DELAY = await myTestCoin.WITHDRAW_DELAY()
+
+    // First stake
+    await myTestCoin.connect(user).stake(stackedAmount)
+
+    // Withdraw first stake
+    await helpers.time.increase(WITHDRAW_DELAY)
+    await myTestCoin.connect(user).withdraw()
+
+    // Second stake after withdraw
+    await myTestCoin.connect(user).stake(stackedAmount)
+
+    const { amount } = await myTestCoin.stakeByUser(user.address)
+
+    assert(amount.eq(stackedAmount), `stackedAmount != locked amount, ${stackedAmount} != ${amount}`)
   })
 
   // This test used 3.5 rewards periods: 1x time, 1.5x time, 1 time, sum = 3x full time period rewards
@@ -195,6 +223,9 @@ describe('MyTestCoin', function () {
       withdrawedBalance.eq(stackedAmount),
       `withdrawedBalance != stackedAmount, ${withdrawedBalance} != ${stackedAmount}`,
     )
+
+    const { amount: stakedBalanceAfterWithdraw } = await myTestCoin.stakeByUser(user.address)
+    assert(stakedBalanceAfterWithdraw.eq(0), `stakedBalanceAfterWithdraw != 0, ${stakedBalanceAfterWithdraw} != 0`)
   })
 
   it('Withdraw: before expiry', async () => {
@@ -210,7 +241,7 @@ describe('MyTestCoin', function () {
   it('Withdraw: without deposit', async () => {
     await expect(myTestCoin.connect(user).withdraw()).to.be.revertedWith("Can't withdraw without a stake")
   })
-  
+
   it('Calculate rewards: regular', async () => {
     const stackedAmount = userInitialBalance.div(2)
 
@@ -229,16 +260,25 @@ describe('MyTestCoin', function () {
 
     await helpers.time.increase(REWARD_PERIOD) // 1 period
     const rewardsFirstPeriod = await myTestCoin.rewards(user.address)
-    assert(rewardsFirstPeriod.eq(estimatedRewardsByOnePeriod), `rewardsFirstPeriod != estimatedRewardsByOnePeriod, ${rewardsFirstPeriod} != ${estimatedRewardsByOnePeriod}`)
+    assert(
+      rewardsFirstPeriod.eq(estimatedRewardsByOnePeriod),
+      `rewardsFirstPeriod != estimatedRewardsByOnePeriod, ${rewardsFirstPeriod} != ${estimatedRewardsByOnePeriod}`,
+    )
 
     await helpers.time.increase(REWARD_PERIOD.div(2)) // 1.5 period
     const rewardsOneAndHalfPeriod = await myTestCoin.rewards(user.address)
-    assert(rewardsOneAndHalfPeriod.eq(estimatedRewardsByOnePeriod), `rewardsOneAndHalfPeriod != estimatedRewardsByOnePeriod, ${rewardsOneAndHalfPeriod} != ${estimatedRewardsByOnePeriod}`)
+    assert(
+      rewardsOneAndHalfPeriod.eq(estimatedRewardsByOnePeriod),
+      `rewardsOneAndHalfPeriod != estimatedRewardsByOnePeriod, ${rewardsOneAndHalfPeriod} != ${estimatedRewardsByOnePeriod}`,
+    )
 
     await helpers.time.increase(REWARD_PERIOD.div(2)) // 2 period
     const rewardsTwoPeriod = await myTestCoin.rewards(user.address)
     const estimatedRewardsByTwoPeriod = estimatedRewardsByOnePeriod.mul(2)
-    assert(rewardsTwoPeriod.eq(estimatedRewardsByTwoPeriod), `rewardsTwoPeriod != estimatedRewardsByTwoPeriod, ${rewardsTwoPeriod} != ${estimatedRewardsByTwoPeriod}`)
+    assert(
+      rewardsTwoPeriod.eq(estimatedRewardsByTwoPeriod),
+      `rewardsTwoPeriod != estimatedRewardsByTwoPeriod, ${rewardsTwoPeriod} != ${estimatedRewardsByTwoPeriod}`,
+    )
 
     // add 0.5 period to check save rewards
     await helpers.time.increase(REWARD_PERIOD.div(2)) // 2.5 period
@@ -249,6 +289,9 @@ describe('MyTestCoin', function () {
 
     await helpers.time.increase(REWARD_PERIOD.div(2)) // 3 period, rewards by 1 period
     const rewardsLast = await myTestCoin.rewards(user.address)
-    assert(rewardsLast.eq(estimatedRewardsByOnePeriod), `rewardsLast != estimatedRewardsByOnePeriod, ${rewardsLast} != ${estimatedRewardsByOnePeriod}`)
+    assert(
+      rewardsLast.eq(estimatedRewardsByOnePeriod),
+      `rewardsLast != estimatedRewardsByOnePeriod, ${rewardsLast} != ${estimatedRewardsByOnePeriod}`,
+    )
   })
 })

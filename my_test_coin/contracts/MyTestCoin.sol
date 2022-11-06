@@ -74,6 +74,7 @@ contract MyTestCoin is ERC20 {
     function stake(uint256 _amount) external {
         require(_amount > 0, "Amount can not be zero");
         require(balanceOf(msg.sender) >= _amount, "Not enough balance");
+        require(stakeByUser[msg.sender].amount == 0, "Can't staked with an existing stake");
 
         _transfer(msg.sender, address(this), _amount);
 
