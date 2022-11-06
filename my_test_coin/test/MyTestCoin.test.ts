@@ -210,4 +210,45 @@ describe('MyTestCoin', function () {
   it('Withdraw: without deposit', async () => {
     await expect(myTestCoin.connect(user).withdraw()).to.be.revertedWith("Can't withdraw without a stake")
   })
+  
+  it('Calculate rewards: regular', async () => {
+    const stackedAmount = userInitialBalance.div(2)
+
+    const REWARD_PERIOD = await myTestCoin.REWARD_PERIOD()
+    const REWARD_RATE_PER_PERIOD = await myTestCoin.REWARD_RATE_PER_PERIOD()
+    const REWARD_DENOMINATOR = await myTestCoin.REWARD_DENOMINATOR()
+
+    const estimatedRewardsByOnePeriod = stackedAmount.mul(REWARD_RATE_PER_PERIOD).div(REWARD_DENOMINATOR)
+
+    const rewardsBeforeStake = await myTestCoin.rewards(user.address)
+    assert(rewardsBeforeStake.eq(0), `rewardsBeforeStake != 0, ${rewardsBeforeStake} != 0`)
+
+    await myTestCoin.connect(user).stake(stackedAmount)
+    const rewardsAfterStake = await myTestCoin.rewards(user.address)
+    assert(rewardsAfterStake.eq(0), `rewardsAfterStake != 0, ${rewardsAfterStake} != 0`)
+
+    await helpers.time.increase(REWARD_PERIOD) // 1 period
+    const rewardsFirstPeriod = await myTestCoin.rewards(user.address)
+    assert(rewardsFirstPeriod.eq(estimatedRewardsByOnePeriod), `rewardsFirstPeriod != estimatedRewardsByOnePeriod, ${rewardsFirstPeriod} != ${estimatedRewardsByOnePeriod}`)
+
+    await helpers.time.increase(REWARD_PERIOD.div(2)) // 1.5 period
+    const rewardsOneAndHalfPeriod = await myTestCoin.rewards(user.address)
+    assert(rewardsOneAndHalfPeriod.eq(estimatedRewardsByOnePeriod), `rewardsOneAndHalfPeriod != estimatedRewardsByOnePeriod, ${rewardsOneAndHalfPeriod} != ${estimatedRewardsByOnePeriod}`)
+
+    await helpers.time.increase(REWARD_PERIOD.div(2)) // 2 period
+    const rewardsTwoPeriod = await myTestCoin.rewards(user.address)
+    const estimatedRewardsByTwoPeriod = estimatedRewardsByOnePeriod.mul(2)
+    assert(rewardsTwoPeriod.eq(estimatedRewardsByTwoPeriod), `rewardsTwoPeriod != estimatedRewardsByTwoPeriod, ${rewardsTwoPeriod} != ${estimatedRewardsByTwoPeriod}`)
+
+    // add 0.5 period to check save rewards
+    await helpers.time.increase(REWARD_PERIOD.div(2)) // 2.5 period
+
+    await myTestCoin.connect(user).claimRewards()
+    const rewardsAfterClaim = await myTestCoin.rewards(user.address)
+    assert(rewardsAfterClaim.eq(0), `rewardsAfterClaim != 0, ${rewardsAfterClaim} != 0`)
+
+    await helpers.time.increase(REWARD_PERIOD.div(2)) // 3 period, rewards by 1 period
+    const rewardsLast = await myTestCoin.rewards(user.address)
+    assert(rewardsLast.eq(estimatedRewardsByOnePeriod), `rewardsLast != estimatedRewardsByOnePeriod, ${rewardsLast} != ${estimatedRewardsByOnePeriod}`)
+  })
 })
