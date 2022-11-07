@@ -15,6 +15,10 @@ Chain ID: 31337
 
 Currency symbol: ETH
 
+3. Reset account data
+
+(Metamask: Settings -> Advanced -> Reset Account)
+
 # Install
 
 1. Clone this repository
