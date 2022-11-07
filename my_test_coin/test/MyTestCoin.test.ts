@@ -213,15 +213,19 @@ describe('MyTestCoin', function () {
 
     await helpers.time.increase(WITHDRAW_DELAY)
 
+    const rewards = await myTestCoin.rewards(user.address)
+
     await myTestCoin.connect(user).withdraw()
 
     const userBalanceAfterWithdraw = await myTestCoin.balanceOf(user.address)
 
     const withdrawedBalance = userBalanceAfterWithdraw.sub(userBalanceAfterStake)
 
+    const estimatedWithdrawAmount = stackedAmount.add(rewards)
+
     assert(
-      withdrawedBalance.eq(stackedAmount),
-      `withdrawedBalance != stackedAmount, ${withdrawedBalance} != ${stackedAmount}`,
+      withdrawedBalance.eq(estimatedWithdrawAmount),
+      `withdrawedBalance != estimatedWithdrawAmount, ${withdrawedBalance} != ${estimatedWithdrawAmount}`,
     )
 
     const { amount: stakedBalanceAfterWithdraw } = await myTestCoin.stakeByUser(user.address)

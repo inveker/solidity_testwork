@@ -1,12 +1,14 @@
 {
   "name": "my_test_coin",
   "version": "1.0.0",
-  "description": "",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "",
   "license": "MIT",
+  "scripts": {
+    "test": "hardhat test",
+    "testNode": "hardhat node",
+    "timeHour": "cross-env TIME=3600 hardhat run ./scripts/time.ts --network localhost",
+    "timeHalfHour": "cross-env TIME=1800 hardhat run ./scripts/time.ts --network localhost",
+    "timeDay": "cross-env TIME=86400 hardhat run ./scripts/time.ts --network localhost"
+  },
   "dependencies": {
     "hardhat": "^2.12.2"
   },
@@ -14,6 +16,7 @@
     "@nomicfoundation/hardhat-network-helpers": "^1.0.6",
     "@nomicfoundation/hardhat-toolbox": "^1.0.2",
     "@openzeppelin/contracts": "^4.7.3",
+    "cross-env": "^7.0.3",
     "hardhat-abi-exporter": "^2.10.0",
     "hardhat-deploy": "^0.11.14",
     "hardhat-gas-reporter": "^1.0.9",

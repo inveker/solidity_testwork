@@ -1,7 +1,7 @@
 import { FC, ReactNode } from "react";
 import { ConnectKitProvider } from "connectkit";
 import { publicProvider } from "wagmi/providers/public";
-import { WagmiConfig, createClient, configureChains, Chain, chain } from "wagmi";
+import { WagmiConfig, createClient, configureChains, chain } from "wagmi";
 import { CoinbaseWalletConnector } from "wagmi/connectors/coinbaseWallet";
 import { InjectedConnector } from "wagmi/connectors/injected";
 import { MetaMaskConnector } from "wagmi/connectors/metaMask";

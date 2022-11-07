@@ -146,6 +146,11 @@ contract MyTestCoin is ERC20 {
         require(userStake.amount > 0, "Can't withdraw without a stake");
         require(block.timestamp >= userStake.creationTimestamp + WITHDRAW_DELAY, "Blocking period has not expired");
 
+        uint256 rewardsAmount = _calculateRewards(userStake);
+        if(rewardsAmount > 0) {
+            _mint(msg.sender, rewardsAmount);
+        }
+
         delete stakeByUser[msg.sender];
 
         _transfer(address(this), msg.sender, userStake.amount);

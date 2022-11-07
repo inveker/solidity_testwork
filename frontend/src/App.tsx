@@ -5,6 +5,8 @@ import { Stake } from "./components/Stake";
 import { Header } from "./components/Header";
 import { WalletConnector } from "./components/WalletConnector";
 import styled from "@emotion/styled";
+import { useAccount } from "wagmi";
+import { UnauthorizedPlaceholder } from "./components/UnauthorizedPlaceholder";
 
 const BodyWrapper = styled.div`
   margin: 20px auto 0;
@@ -12,15 +14,21 @@ const BodyWrapper = styled.div`
 `;
 
 export default function App() {
+  const { isConnected } = useAccount();
+
   return (
     <WalletConnector>
       <Box sx={{ flexGrow: 1 }}>
         <Header />
-        <BodyWrapper>
-          <Stake />
-          <ClaimRewards />
-          <Withdraw />
-        </BodyWrapper>
+        {!isConnected ? (
+          <UnauthorizedPlaceholder />
+        ) : (
+          <BodyWrapper>
+            <Stake />
+            <ClaimRewards />
+            <Withdraw />
+          </BodyWrapper>
+        )}
       </Box>
     </WalletConnector>
   );
