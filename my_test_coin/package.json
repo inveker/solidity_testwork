@@ -5,9 +5,9 @@
   "scripts": {
     "test": "hardhat test",
     "testNode": "hardhat node",
-    "timeHour": "cross-env TIME=3600 hardhat run ./scripts/time.ts --network localhost",
-    "timeHalfHour": "cross-env TIME=1800 hardhat run ./scripts/time.ts --network localhost",
-    "timeDay": "cross-env TIME=86400 hardhat run ./scripts/time.ts --network localhost"
+    "timeHour": "cross-env TIME=3610 hardhat run ./scripts/time.ts --network localhost",
+    "timeHalfHour": "cross-env TIME=1810 hardhat run ./scripts/time.ts --network localhost",
+    "timeDay": "cross-env TIME=86410 hardhat run ./scripts/time.ts --network localhost"
   },
   "dependencies": {
     "hardhat": "^2.12.2"
