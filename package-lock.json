@@ -1,0 +1,10 @@
+{
+  "scripts": {
+    "install": "cd ./frontend && npm i --force && cd ../my_test_coin && npm i",
+    "node": "cd ./my_test_coin && npm run testNode",
+    "frontend": "cd ./frontend && npm run start",
+    "timeHour": "cd ./my_test_coin && npm run timeHour",
+    "timeHalfHour": "cd ./my_test_coin && npm run timeHalfHour",
+    "timeDay": "cd ./my_test_coin && npm run timeDay"
+  }
+}
