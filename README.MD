@@ -19,6 +19,14 @@ Currency symbol: ETH
 
 (Metamask: Settings -> Advanced -> Reset Account)
 
+4. Add MyTestToken asset
+
+Token contract address: 0x5FbDB2315678afecb367f032d93F642f64180aa3
+
+Token symbol: MTC
+
+Token decimal: 18
+
 # Install
 
 1. Clone this repository
