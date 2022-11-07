@@ -1,16 +1,14 @@
-import { FC, ReactNode } from "react";
-import { ConnectKitProvider } from "connectkit";
-import { publicProvider } from "wagmi/providers/public";
-import { WagmiConfig, createClient, configureChains, chain } from "wagmi";
-import { CoinbaseWalletConnector } from "wagmi/connectors/coinbaseWallet";
-import { InjectedConnector } from "wagmi/connectors/injected";
-import { MetaMaskConnector } from "wagmi/connectors/metaMask";
-import { WalletConnectConnector } from "wagmi/connectors/walletConnect";
+import { FC, ReactNode } from 'react'
+import { ConnectKitProvider } from 'connectkit'
+import { publicProvider } from 'wagmi/providers/public'
+import { WagmiConfig, createClient, configureChains, chain } from 'wagmi'
+import { CoinbaseWalletConnector } from 'wagmi/connectors/coinbaseWallet'
+import { InjectedConnector } from 'wagmi/connectors/injected'
+import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
+import { WalletConnectConnector } from 'wagmi/connectors/walletConnect'
+import { ChainUpdateListener } from './ChainUpdateListener'
 
-const { chains, provider, webSocketProvider } = configureChains(
-  [chain.hardhat],
-  [publicProvider()]
-);
+const { chains, provider, webSocketProvider } = configureChains([chain.hardhat], [publicProvider()])
 
 // Set up client
 const client = createClient({
@@ -20,7 +18,7 @@ const client = createClient({
     new CoinbaseWalletConnector({
       chains,
       options: {
-        appName: "wagmi",
+        appName: 'wagmi',
       },
     }),
     new WalletConnectConnector({
@@ -32,19 +30,21 @@ const client = createClient({
     new InjectedConnector({
       chains,
       options: {
-        name: "Injected",
+        name: 'Injected',
         shimDisconnect: true,
       },
     }),
   ],
   provider,
   webSocketProvider,
-});
+})
 
 export const WalletConnector: FC<{ children: ReactNode }> = ({ children }) => {
   return (
     <WagmiConfig client={client}>
-      <ConnectKitProvider>{children}</ConnectKitProvider>
+      <ConnectKitProvider>
+        <ChainUpdateListener>{children}</ChainUpdateListener>
+      </ConnectKitProvider>
     </WagmiConfig>
-  );
-};
+  )
+}
